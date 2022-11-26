@@ -1,0 +1,38 @@
+---
+title: "p8105_hw6_jy3186"
+author: "Jiayi Yang"
+date: "2022-11-26"
+output: github_document
+---
+```{r}
+library(tidyverse)
+library(dplyr)
+```
+
+# Problem 2
+Import and tidy the dataset
+```{r, message = FALSE}
+homicide_df = 
+  read_csv(url("https://github.com/washingtonpost/data-homicides/blob/master/homicide-data.csv?raw=true"))
+```
+Create a city_state variable (e.g. “Baltimore, MD”), and a binary variable of whether homicide is solved
+```{r, warning= FALSE}
+homicide_new =
+homicide_df %>% 
+  mutate(city_state = str_c(city, state, sep = ", ")) %>% 
+  group_by(city_state)
+
+cleaned_df =
+  homicide_new %>% 
+   mutate(
+    solve_status = ifelse(disposition %in% c("Closed without arrest", "Open/No arrest"),1,0),
+    victim_age = as.numeric(victim_age)
+  ) %>% 
+  drop_na() %>% 
+  filter( 
+          victim_race %in% c("White", "Black"),
+         !city_state %in% c("Dallas, TX", "Phoenix, AZ", "Kansas City, MO", "Tulsa, AL")) 
+
+cleaned_df
+```
+
