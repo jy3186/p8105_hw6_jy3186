@@ -15,7 +15,7 @@ Import and tidy the dataset
 homicide_df = 
   read_csv(url("https://github.com/washingtonpost/data-homicides/blob/master/homicide-data.csv?raw=true"))
 ```
-Create a city_state variable (e.g. “Baltimore, MD”), and a binary variable of whether homicide is solved
+Create a city_state variable (e.g. “Baltimore, MD”), and a binary variable of whether homicide is solved. `solve_status` is 1 when remains unsolved, is 0 when it's solved.
 ```{r, warning= FALSE}
 homicide_new =
 homicide_df %>% 
@@ -39,7 +39,26 @@ For the city of Baltimore, MD, use the glm function to fit a logistic regression
 ```{r}
 Baltimore_df = 
   cleaned_df %>% 
-  filter(city_state == "Baltimore, MD") %>% 
+  filter(city == "Baltimore") %>% 
   select(solve_status, victim_age, victim_sex, victim_race)
+
+fit_glm = 
+  Baltimore_df %>% 
+  glm(solve_status ~ victim_age + victim_race + victim_sex, data = ., family = binomial())
+
+fit_glm
+```
+
+Save the output of glm as an R object; apply the broom::tidy to this object; 
+odds ratio for solving homicides comparing male victims to female victims keeping all other variables fixed.
+
+```{r}
+fit_glm %>% 
+  broom::tidy() %>% 
+  mutate(
+    OR = exp(estimate)
+  ) %>% 
+  select(term, log_OR = estimate, OR, p.value, ) %>% 
+  knitr::kable(digits = 3)
 ```
 
