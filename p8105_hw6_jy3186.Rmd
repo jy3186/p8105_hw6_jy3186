@@ -35,4 +35,11 @@ cleaned_df =
 
 cleaned_df
 ```
+For the city of Baltimore, MD, use the glm function to fit a logistic regression with resolved vs unresolved as the outcome and victim age, sex and race as predictors.
+```{r}
+Baltimore_df = 
+  cleaned_df %>% 
+  filter(city_state == "Baltimore, MD") %>% 
+  select(solve_status, victim_age, victim_sex, victim_race)
+```
 
