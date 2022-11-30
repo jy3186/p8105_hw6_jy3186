@@ -39,30 +39,23 @@ cleaned_df
 ```
 For the city of Baltimore, MD, use the glm function to fit a logistic regression with resolved vs unresolved as the outcome and victim age, sex and race as predictors.
 ```{r}
-Baltimore_df = 
-  cleaned_df %>% 
-  filter(city == "Baltimore") %>% 
-  select(solve_status, victim_age, victim_sex, victim_race)
-
 fit_glm = 
-  Baltimore_df %>% 
-  glm(solve_status ~ victim_age + victim_race + victim_sex, data = ., family = binomial())
-
+  cleaned_df %>% 
+  nest(data = -city_state) %>% 
+  mutate(
+    model = map(data, ~glm(solve_status ~ victim_age + victim_race + victim_sex, data = .x, family = binomial()),
+     results = map(model, broom::tidy))
+  ) %>%
+  select(city_state, results) %>% 
+  unnest(results) %>% 
+  mutate(OR = exp(estimate),
+         CI_lower = exp(estimate -1.96*std.error),
+         CI_higher = exp(estimate +1.96*std.error)
+         ) %>%
+  select(city_state, term, OR, CI_lower, CI_higher) 
 fit_glm
 ```
 
-Save the output of glm as an R object; apply the broom::tidy to this object; 
-odds ratio for solving homicides comparing male victims to female victims keeping all other variables fixed.
-
-```{r}
-fit_glm %>% 
-  broom::tidy() %>% 
-  mutate(
-    OR = exp(estimate)
-  ) %>% 
-  select(term, log_OR = estimate, OR, p.value) %>% 
-  knitr::kable(digits = 3)
-```
 Now run glm for each of the cities in your dataset, and extract the adjusted odds ratio (and CI) for solving homicides comparing male victims to female victims. 
 ```{r}
 
@@ -111,7 +104,27 @@ model2 = lm(bwt~bhead*blength*babysex, data = birthweight)
 ```
 Make this comparison in terms of the cross-validated prediction error; use crossv_mc and functions in purrr as appropriate.
 ```{r}
+cv_df = 
+  crossv_mc(birthweight, 100) 
+```
 
+```{r}
+cv_df =
+   cv_df %>% 
+  mutate(
+    train = map(train, as_tibble),
+    test = map(test, as_tibble)
+  ) %>% 
+  mutate(
+    mod1 = map(train, ~lm(bwt~gaweeks, data = .x)),
+    compare_mod1 = map(train, ~lm(bwt~blength +gaweeks, data = .x)),
+    compare_mod2 = map(train, ~lm(bwt~bhead*blength*babysex, data = .x)) 
+  ) %>% 
+  mutate(
+    rmse_mod1 = map2_dbl(mod1, test, ~rmse(model = .x, data = .y)),
+    rmse_compare_mod1 = map2_dbl(compare_mod1, test, ~rmse(model = .x, data = .y)),
+    rmse_compare_mod2 = map2_dbl(compare_mod2, test, ~rmse(model = .x, data = .y))
+  )
 ```
 
 
