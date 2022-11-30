@@ -8,6 +8,7 @@ output: github_document
 library(tidyverse)
 library(dplyr)
 library(readr)
+library(modelr)
 ```
 
 # Problem 2
@@ -64,25 +65,6 @@ fit_glm %>%
 ```
 Now run glm for each of the cities in your dataset, and extract the adjusted odds ratio (and CI) for solving homicides comparing male victims to female victims. 
 ```{r}
-glm_map = 
-  cleaned_df %>% 
-  mutate(
-    log = map(.x = data, ~ glm(
-      solve_status ~ victim_age + victim_sex + victim_race,
-      data = .x,
-      family = binomial()
-    )
-  ), result  = map(log, broom::tidy)) %>%
-  select(-data) %>%
-  unnest(result) %>%
-  mutate(ci = map2(.x = log,
-                   .y = term,
-                   ~ confint(.x, .y))) %>%
-  select(city_state, term, estimate, ci) %>%
-  filter(term == "victim_raceWhite")
-homicide_df %>%
-  head() %>%
-  knitr::kable()
 
 ```
 
@@ -94,11 +76,31 @@ birthweight %>%
   select(bwt, blength, gaweeks, bhead, babysex) %>% 
   drop_na() %>% 
   mutate(
-    case_when(babysex == 1 ~ "Male",
+    babysex = case_when(babysex == 1 ~ "Male",
               babysex == 2 ~ "Female") %>% 
       as.factor()
   )
 ```
+regression analysis, made a model
+```{r}
+model = lm(bwt~gaweeks, data = birthweight)
+model
+```
+show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
+```{r}
+resid_plot =
+birthweight %>% 
+  modelr::add_residuals(model) %>% 
+  ggplot(aes(x = gasweeks, y = resid)) + geom_violin()
+
+predict_plot = 
+  birthweight %>% 
+  modelr::add_predictions(model) %>% 
+  ggplot(aes(x = gasweeks, y = resid)) + geom_violin()
+
+```
+
+
 
 
 
