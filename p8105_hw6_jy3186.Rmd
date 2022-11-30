@@ -100,6 +100,19 @@ predict_plot =
 
 ```
 
+Compare your model to two others:
+
+One using length at birth and gestational age as predictors (main effects only)
+One using head circumference, length, sex, and all interactions (including the three-way interaction) between these
+
+```{r}
+model1 = lm(bwt~blength + gaweeks, data = birthweight)
+model2 = lm(bwt~bhead*blength*babysex, data = birthweight)
+```
+Make this comparison in terms of the cross-validated prediction error; use crossv_mc and functions in purrr as appropriate.
+```{r}
+
+```
 
 
 
