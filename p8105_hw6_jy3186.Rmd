@@ -9,6 +9,7 @@ library(tidyverse)
 library(dplyr)
 library(readr)
 library(modelr)
+library(ggridges)
 ```
 # Problem 1
 ```{r setup, include=FALSE}
@@ -50,7 +51,7 @@ homicide_df %>%
 cleaned_df =
   homicide_new %>% 
    mutate(
-    solve_status = ifelse(disposition %in% c("Closed without arrest", "Open/No arrest"),1,0),
+    solve_status = ifelse(disposition %in% c("Closed without arrest", "Open/No arrest"),0,1),
     victim_age = as.numeric(victim_age)
   ) %>% 
   drop_na() %>% 
@@ -61,6 +62,30 @@ cleaned_df =
 cleaned_df
 ```
 For the city of Baltimore, MD, use the glm function to fit a logistic regression with resolved vs unresolved as the outcome and victim age, sex and race as predictors.
+``` {r}
+Baltimore_df = 
+  cleaned_df %>% 
+  filter(city_state == "Baltimore, MD") %>% 
+  mutate(
+    victim_race = fct_relevel(victim_race, "White")
+  ) %>% 
+  select(solve_status, victim_age, victim_sex, victim_race)
+```
+
+``` {r}
+fit_glm = 
+  Baltimore_df %>% 
+  glm(solve_status ~ victim_age + victim_race + victim_sex, data = ., family = binomial()) %>% 
+  broom::tidy() %>% 
+  mutate(OR = exp(estimate),
+         CI_lower = exp(estimate -1.96*std.error),
+         CI_higher = exp(estimate +1.96*std.error)
+         ) %>% 
+  select(-std.error, -statistic)
+fit_glm
+```
+For solving homicides comparing male victims to female victims keeping all other variables fixed, the adjusted OR is 3.16 with a CI (1.99, 5.03).
+
 
 Now run glm for each of the cities in your dataset, and extract the adjusted odds ratio (and CI) for solving homicides comparing male victims to female victims. 
 ```{r}
@@ -85,11 +110,18 @@ Create a plot that shows the estimated ORs and CIs for each city. Organize citie
 
 ```{r}
 fit_glm %>% 
+
   ggplot(aes(x = city_state, y = OR)) +
   geom_point() + 
   geom_errorbar(aes(ymin = CI_lower, ymax = CI_higher)) +
   facet_wrap(~term) + 
-  theme(axis.text.x = element_text(angle = 80, hjust = 1))
+  theme(axis.text.x = element_text(angle = 80, hjust = 1)) +
+  labs(
+    title = "Association between the estimated ORs and CIs for each city",
+    x = "city_state",
+    y = "Estimates and confidence interval of each average estimate"
+  )
+
 ```
 
 ## Problem 3
@@ -104,7 +136,9 @@ birthweight %>%
               babysex == 2 ~ "Female") %>% 
       as.factor()
   )
+skimr::skim(birthweight)
 ```
+There is no missing data.
 regression analysis, made a model
 ```{r}
 model = lm(bwt~gaweeks, data = birthweight)
@@ -115,13 +149,14 @@ show a plot of model residuals against fitted values – use add_predictions and
 resid_plot =
 birthweight %>% 
   modelr::add_residuals(model) %>% 
-  ggplot(aes(x = gasweeks, y = resid)) + geom_violin()
+  ggplot(aes(x = gaweeks, y = resid)) + geom_point()
 
 predict_plot = 
   birthweight %>% 
   modelr::add_predictions(model) %>% 
-  ggplot(aes(x = gasweeks, y = resid)) + geom_violin()
+  ggplot(aes(x = gaweeks, y = resid)) + geom_point()
 
+resid_plot
 ```
 
 Compare your model to two others:
