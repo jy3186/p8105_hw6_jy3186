@@ -10,6 +10,29 @@ library(dplyr)
 library(readr)
 library(modelr)
 ```
+# Problem 1
+```{r setup, include=FALSE}
+library(tidyverse)
+library(viridis)
+
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = FALSE,
+	fig.width = 8, 
+  fig.height = 6,
+  out.width = "90%"
+)
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+```
 
 # Problem 2
 Import and tidy the dataset
@@ -147,5 +170,5 @@ cv_df %>%
   ggplot(aes(x = model, y = rmse)) + geom_violin()
 ```
 
-
+I will decide to use the third model(compare_mod2) with head circumference, length, sex, and all interactions (including the three-way interaction), because it has the least rmse which is the most reflective in representing the relationship between birthweight and these predictors.
 
